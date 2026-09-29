@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Render Keeper - Server Mode</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07080a;--card:#111317;--border:#1e2128;--green:#00ff88;--cyan:#00e5ff;--red:#ff2d55;--text:#e8e9ed;--muted:#8a8d97}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;min-height:100vh}
+.bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:radial-gradient(800px at 20% -10%, rgba(0,255,136,.15), transparent), radial-gradient(600px at 90% 10%, rgba(0,229,255,.12), transparent), var(--bg)}
+.top{border-bottom:1px solid var(--border);background:rgba(7,8,10,.8);backdrop-filter:blur(20px);padding:14px 24px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+.logo{font-weight:700;letter-spacing:-.5px;display:flex;gap:10px;align-items:center}
+.dot{width:10px;height:10px;background:var(--green);border-radius:50%;box-shadow:0 0 15px var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.wrap{max-width:1100px;margin:0 auto;padding:20px;display:grid;grid-template-columns:360px 1fr;gap:16px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.h{font-size:11px;letter-spacing:1.5px;color:var(--muted);margin-bottom:16px;text-transform:uppercase;font-weight:600;display:flex;justify-content:space-between}
+.label{font-size:11px;color:var(--muted);margin:14px 0 6px;display:block;font-weight:600;letter-spacing:.5px}
+.input{width:100%;background:#080a0d;border:1px solid var(--border);color:var(--text);padding:12px 14px;border-radius:10px;font-family:'JetBrains Mono';font-size:13px;outline:none;transition:.2s}
+.input:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(0,255,136,.1)}
+.range{width:100%;accent-color:var(--green);margin-top:8px}
+.rps-display{font-family:'JetBrains Mono';font-size:22px;font-weight:700;color:var(--green);margin-top:6px}
+.rps-sub{font-size:10px;color:var(--muted)}
+.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:12px 16px;border-radius:10px;font-family:'Space Grotesk';font-size:12px;font-weight:600;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{border-color:var(--green);background:rgba(0,255,136,.06)}
+.btn-primary{background:var(--green);color:#000;border-color:var(--green);font-weight:700}
+.btn-primary:hover{background:#00e67a;box-shadow:0 0 20px rgba(0,255,136,.3)}
+.btn-danger{color:var(--red);border-color:rgba(255,45,85,.3)} .btn-danger:hover{background:rgba(255,45,85,.1)}
+.list{display:grid;gap:10px;max-height:360px;overflow:auto}
+.item{background:#0d0f13;border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;justify-content:space-between;align-items:center;transition:.2s}
+.item:hover{border-color:#2a2e39}
+.item-left{flex:1;min-width:0}
+.item-title{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-url{font-family:'JetBrains Mono';font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.badge{font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-weight:600;font-family:'JetBrains Mono'}
+.badge-on{background:rgba(0,255,136,.15);color:var(--green);border-color:rgba(0,255,136,.3)}
+.badge-off{background:#15181e;color:var(--muted)}
+.terminal{background:#080a0d;border:1px solid var(--border);border-radius:16px;height:560px;display:flex;flex-direction:column;overflow:hidden}
+.term-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#0d0f13}
+.term-body{flex:1;overflow:auto;padding:14px;font-family:'JetBrains Mono';font-size:11px;line-height:1.9;white-space:pre-wrap}
+.log-ok{color:var(--green)} .log-fail{color:var(--red)} .log-info{color:var(--muted)}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:14px}
+.stat{background:#0d0f13;border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat b{font-size:18px;display:block;font-family:'JetBrains Mono'} .stat span{font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="top">
+<div class="logo"><span class="dot"></span> RENDER_KEEPER // SERVER MODE</div>
+<div style="font-size:11px;color:var(--muted)">Backend does pinging • Works offline • Beautiful UI</div>
+</div>
+
+<div class="wrap">
+<div>
+<div class="card">
+<div class="h">Add Target <span style="color:var(--green)">Server WiFi</span></div>
+
+<label>Target URL (your Render app)</label>
+<input id="url" class="input" placeholder="https://ttdownloader-hraw.onrender.com">
+
+<label>Label</label>
+<input id="label" class="input" placeholder="TT Downloader API">
+
+<label>Requests Per Second</label>
+<input id="rps" class="range" type="range" min="1" max="1000000" value="2" step="1">
+<div class="rps-display" id="rpsVal">2 RPS</div>
+<div class="rps-sub" id="rpsInfo">2 requests every second • Server does pinging, not browser</div>
+
+<div style="margin-top:16px;display:grid;gap:8px">
+<button class="btn btn-primary" onclick="add()">+ ADD TO SERVER</button>
+<div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="startAll()">▶ START ALL</button><button class="btn btn-danger" style="flex:1" onclick="stopAll()">■ STOP</button></div>
+</div>
+
+<div class="stats">
+<div class="stat"><b id="total">0</b><span>Total</span></div>
+<div class="stat"><b id="ok" style="color:var(--green)">0</b><span>OK</span></div>
+<div class="stat"><b id="fail" style="color:var(--red)">0</b><span>Fail</span></div>
+<div class="stat"><b id="curRps" style="color:var(--cyan)">0</b><span>Server RPS</span></div>
+</div>
+</div>
+
+<div class="card" style="margin-top:14px">
+<div class="h">Active Targets <span id="cnt">0</span></div>
+<div id="list" class="list"></div>
+</div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;display:flex;flex-direction:column">
+<div class="term-head"><span>Server Logs • Live from Render</span><button class="btn" style="padding:6px 12px;font-size:10px" onclick="load()">↻ Refresh</button></div>
+<div id="logs" class="term-body"></div>
+</div>
+</div>
+
+<script>
+async function api(p,m='GET',b=null){let o={method:m,headers:{'Content-Type':'application/json'}};if(b)o.body=JSON.stringify(b);let r=await fetch(p,o);return r.json()}
+async function load(){
+ let d=await api('/api/data');
+ document.getElementById('cnt').innerText=d.targets.length;
+ document.getElementById('total').innerText=d.stats.total;
+ document.getElementById('ok').innerText=d.stats.ok;
+ document.getElementById('fail').innerText=d.stats.fail;
+ document.getElementById('curRps').innerText=d.stats.current_rps||0;
+ document.getElementById('list').innerHTML=d.targets.map(t=>`
+  <div class="item">
+   <div class="item-left"><div class="item-title">${t.label||'Untitled'}</div><div class="item-url">${t.url} • ${t.rps} RPS • ${t.status} • ${t.pings} pings</div></div>
+   <div style="display:flex;gap:6px;align-items:center"><span class="badge ${t.active?'badge-on':'badge-off'}">${t.active?t.rps+' RPS':'OFF'}</span><button class="btn" style="padding:6px 10px;font-size:10px" onclick="toggle(${t.id})">${t.active?'STOP':'START'}</button><button class="btn btn-danger" style="padding:6px 8px;font-size:10px" onclick="removeT(${t.id})">✕</button></div>
+  </div>
+ `).join('') || '<div style="text-align:center;padding:30px;opacity:.3;font-size:12px">No targets yet. Add your Render URL above</div>';
+ document.getElementById('logs').innerHTML=d.logs.map(l=>`<div class="${l.color==='green'?'log-ok':l.color==='red'?'log-fail':'log-info'}">[${l.time}] ${l.msg}</div>`).join('');
+ document.getElementById('logs').scrollTop=99999;
+}
+async function add(){
+ let url=document.getElementById('url').value.trim(), label=document.getElementById('label').value.trim(), rps=document.getElementById('rps').value;
+ if(!url){alert('Enter URL');return}
+ if(!url.startsWith('http')){alert('Must start with https://');return}
+ await api('/api/add','POST',{url,label,rps});
+ document.getElementById('url').value=''; load();
+}
+async function removeT(id){await api('/api/remove/'+id,'DELETE'); load()}
+async function toggle(id){
+ let d=await api('/api/data');
+ let t=d.targets.find(x=>x.id===id);
+ if(t.active) await api('/api/stop/'+id,'POST');
+ else await api('/api/start/'+id,'POST');
+ load();
+}
+async function startAll(){await api('/api/start_all','POST'); load()}
+async function stopAll(){await api('/api/stop_all','POST'); load()}
+
+document.getElementById('rps').addEventListener('input',e=>{
+ let v=e.target.value;
+ document.getElementById('rpsVal').innerText=v+' RPS';
+ document.getElementById('rpsInfo').innerText=v+' requests every second • Server does pinging, not browser • Keeps Render alive';
+});
+
+setInterval(load,2000);
+load();
+</script>
+</body>
+</html>
